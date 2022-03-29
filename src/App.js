@@ -126,7 +126,7 @@ const App = () => {
       const save = saved;
       const itemIndex = save.findIndex(el => el.id === elID);
       if (itemIndex !== -1) {
-        save.splice(itemIndex);
+        save.splice(itemIndex, 1);
         storage.set('saved', JSON.stringify(save));
         setSaved(JSON.parse(storage.getString('saved')));
         return;
