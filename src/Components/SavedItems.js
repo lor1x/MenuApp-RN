@@ -1,6 +1,8 @@
 import React, {memo, useState, useEffect} from 'react';
-import {FlatList, View, ScrollView, Text} from 'react-native';
+import {Alert, FlatList, View, ScrollView, Text} from 'react-native';
 import tw, {useDeviceContext} from 'twrnc';
+import IconDel from 'react-native-vector-icons/Ionicons';
+import BlurButton from './BlurButton';
 
 const SavedItems = props => {
   useDeviceContext(tw);
@@ -9,6 +11,37 @@ const SavedItems = props => {
   useEffect(() => {
     props.saved.length > 0 ? setDataDisplay(true) : setDataDisplay(false);
   }, [props.saved]);
+
+  const deleteSavedAlert = () =>
+    Alert.alert(
+      'Delete all saved items',
+      'This action will delete all your saved items. Do you want to continue?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'DO IT!',
+          onPress: () => props.deleteSaved(),
+          style: 'destructive',
+        },
+      ],
+      {cancelable: true},
+    );
+
+  const savedEmptyAlert = () =>
+    Alert.alert(
+      'No saved items to delete',
+      'This action will delete all your saved items (if you had any)',
+      [
+        {
+          text: 'Ok',
+          style: 'cancel',
+        },
+      ],
+      {cancelable: true},
+    );
 
   return (
     props.seeSaved && (
@@ -22,13 +55,30 @@ const SavedItems = props => {
         } ${!props.toClose && ' h-[95%] '}`}>
         <View
           style={tw`flex flex-col items-center justify-center w-full h-full`}>
-          <ScrollView>
+          <ScrollView style={tw`w-full h-full`}>
             <Text
               style={tw`${
                 props.mode === 'light' ? ' text-slate-700 ' : ' text-blue-500 '
-              } font-bold text-3xl mt-2 tracking-wide items-center flex-col flex text-center`}>
+              } font-bold text-2xl mt-2 tracking-wide items-center flex-col flex text-center`}>
               Your Saved Items
             </Text>
+            <View style={tw`flex-row right-1.5 top-2.5 absolute z-20`}>
+              <BlurButton
+                {...props}
+                iconView="px-2 py-1.5"
+                blurStyle="bg-red-500 opacity-75"
+                action={() =>
+                  requestAnimationFrame(() => {
+                    dataDisplay ? deleteSavedAlert() : savedEmptyAlert();
+                  })
+                }>
+                <IconDel
+                  name={dataDisplay ? 'trash-bin' : 'trash-bin-outline'}
+                  size={16}
+                  color={props.mode === 'dark' ? '#fff' : '#000'}
+                />
+              </BlurButton>
+            </View>
             <View
               style={tw`w-full h-full sm:w-10/12 flex-1 flex-col md:justify-around justify-center self-center mb-8 ${
                 dataDisplay ? ' -mt-3 ' : ' mt-2'
@@ -57,5 +107,4 @@ const SavedItems = props => {
     )
   );
 };
-
 export default memo(SavedItems);

@@ -1,7 +1,8 @@
 import React, {memo} from 'react';
-import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import {Image, StyleSheet, Text, View} from 'react-native';
 import tw, {useDeviceContext} from 'twrnc';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import BlurButton from './BlurButton';
 
 const Product = props => {
   useDeviceContext(tw);
@@ -14,11 +15,13 @@ const Product = props => {
         s.addShadow,
       ]}>
       {!props.loading && (
-        <TouchableOpacity
-          style={tw`absolute top-2 right-2 ${
+        <BlurButton
+          touchStyle="absolute top-2 right-2"
+          iconView="px-2 py-1"
+          blurStyle={` opacity-75 ${
             props.mode === 'light' ? ' bg-yellow-600 ' : ' bg-slate-700 '
-          } rounded-lg z-10 px-2 py-1`}
-          onPress={() =>
+          }`}
+          action={() =>
             requestAnimationFrame(() => {
               props.bookmark(props.id);
             })
@@ -32,7 +35,7 @@ const Product = props => {
             size={18}
             color={props.mode === 'dark' ? '#bcbfc5' : '#000'}
           />
-        </TouchableOpacity>
+        </BlurButton>
       )}
       <View style={tw`w-full md:w-1/2`}>
         {props.loading ? (
@@ -97,11 +100,11 @@ const s = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 7,
+      height: 6,
     },
-    shadowOpacity: 0.4,
-    shadowRadius: 8.5,
-    elevation: 15,
+    shadowOpacity: 0.27,
+    shadowRadius: 9.5,
+    elevation: 7,
   },
 });
 
