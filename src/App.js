@@ -87,7 +87,7 @@ const App = () => {
     }
   }, []);
   const fetchData = useCallback(async () => {
-    const url = 'https://api.npoint.io/17abf908383cc3e872ba';
+    const url = 'https://api.npoint.io/240eb541ef3c02fcd7bd';
     netInfo.isConnected ? fetchDataOnline(url) : fetchLocalData();
   }, [netInfo.isConnected, fetchDataOnline]);
   useEffect(() => {
