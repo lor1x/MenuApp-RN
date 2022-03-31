@@ -8,10 +8,16 @@ const BlurButton = props => {
 
   return (
     <TouchableOpacity
-      style={[tw`self-center z-20 ${props.touchStyle}`, s.addShadow]}
+      style={[
+        tw`self-center items-center justify-center z-20 ${props.touchStyle}`,
+        s.addShadow,
+      ]}
       onPress={props.action}>
-      <BlurView
+      <View
         style={tw`absolute top-0 right-0 left-0 bottom-0 rounded-lg ${props.blurStyle}`}
+      />
+      <BlurView
+        style={tw`absolute top-0 right-0 left-0 bottom-0 rounded-lg`}
         blurType={props.mode === 'dark' ? 'dark' : 'light'}
         blurAmount={6}
         reducedTransparencyFallbackColor={

@@ -52,44 +52,36 @@ const App = () => {
     />
   ); //* Used by Fatlist
 
-  const fetchLocalData = async () => {
-    try {
-      const localJson = storage.getString('data');
-      const localData = JSON.parse(localJson);
-      if (localData !== undefined || localData !== null || localData !== []) {
-        setData(localData);
-        setCategory(localData);
-      }
-    } catch (error) {
-      console.log('Failed to load data', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  const fetchDataOnline = useCallback(async url => {
-    try {
-      const localJson = storage.getString('data');
-      const localData = JSON.parse(localJson);
-      const apiData = await fetch(url);
-      const json = await apiData.json();
-      if (JSON.stringify(localData) === JSON.stringify(json.products)) {
-        fetchLocalData();
-      } else {
-        storage.delete('data');
-        storage.set('data', JSON.stringify(json.products));
-        setData(json.products);
-        setCategory(json.products);
-      }
-    } catch (error) {
-      console.log('Failed to get data', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
   const fetchData = useCallback(async () => {
     const url = 'https://api.npoint.io/240eb541ef3c02fcd7bd';
-    netInfo.isConnected ? fetchDataOnline(url) : fetchLocalData();
-  }, [netInfo.isConnected, fetchDataOnline]);
+    if (netInfo.isConnected) {
+      try {
+        storage.delete('data');
+        const apiData = await fetch(url);
+        const json = await apiData.json();
+        storage.set('data', JSON.stringify(json));
+        setData(json.products);
+        setCategory(json.products);
+      } catch (error) {
+        console.log('Failed to get data', error);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      try {
+        const localJson = storage.getString('data');
+        const localData = JSON.parse(localJson);
+        if (localData !== undefined || localData !== null || localData !== []) {
+          setData(localData.products);
+          setCategory(localData.products);
+        }
+      } catch (error) {
+        console.log('Failed to get data', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }, [netInfo.isConnected]);
   useEffect(() => {
     fetchData();
   }, [netInfo.isConnected, fetchData]);
@@ -196,14 +188,6 @@ const App = () => {
           </View>
         </ScrollView>
       </View>
-      <OfflineStatus
-        mode={defaultMode}
-        toClose={toClose}
-        setToClose={setToClose}
-        width={width}
-        height={height}
-        seeSaved={seeSaved}
-      />
       <SavedItems
         seeSaved={seeSaved}
         toClose={toClose}
@@ -214,6 +198,15 @@ const App = () => {
         deleteSaved={deleteAllSaved}
         mode={defaultMode}
       />
+      {toClose && (
+        <OfflineStatus
+          mode={defaultMode}
+          setToClose={setToClose}
+          width={width}
+          height={height}
+          seeSaved={seeSaved}
+        />
+      )}
       <BottomOptions
         mode={defaultMode}
         setMode={setMode}

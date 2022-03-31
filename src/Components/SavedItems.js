@@ -54,7 +54,9 @@ const SavedItems = props => {
                 <BlurButton
                   {...props}
                   iconView="px-2 py-1.5"
-                  blurStyle="bg-red-500 opacity-75"
+                  blurStyle={` bg-red-500 ${
+                    props.mode === 'light' ? ' opacity-45 ' : ' opacity-75 '
+                  }`}
                   action={() =>
                     requestAnimationFrame(() => {
                       deleteSavedAlert();

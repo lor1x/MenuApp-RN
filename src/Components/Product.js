@@ -15,11 +15,13 @@ const Product = props => {
       ]}>
       {!props.loading && (
         <BlurButton
-          touchStyle="absolute top-2 right-2"
+          touchStyle="absolute top-1.5 right-1.5"
           iconView="px-2 py-1"
-          blurStyle={` opacity-75 ${
-            props.mode === 'light' ? ' bg-yellow-600 ' : ' bg-slate-700 '
-          }`}
+          blurStyle={
+            props.mode === 'light'
+              ? ' opacity-35 bg-yellow-600 '
+              : ' opacity-15 bg-slate-700 '
+          }
           action={() =>
             requestAnimationFrame(() => {
               props.bookmark(props.id);
@@ -32,7 +34,8 @@ const Product = props => {
                 : 'bookmark-o'
             }
             size={18}
-            color={props.mode === 'dark' ? '#bcbfc5' : '#000'}
+            color={props.mode === 'dark' ? '#fff' : '#000'}
+            style={tw`z-10`}
           />
         </BlurButton>
       )}
