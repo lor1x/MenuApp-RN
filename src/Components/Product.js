@@ -9,7 +9,6 @@ const Product = props => {
 
   return (
     <View
-      key={props.id}
       style={[
         tw`w-11/12 flex flex-col self-center md:flex-row rounded-lg my-3 px-4 py-3 ${props.styleBG}`,
         s.addShadow,
@@ -43,6 +42,7 @@ const Product = props => {
         ) : (
           <Image
             style={tw`h-50 w-full rounded-lg`}
+            resizeMode="cover"
             source={{uri: props.imageUrl}}
           />
         )}

@@ -1,19 +1,18 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {
-  Appearance,
   FlatList,
   Platform,
   SafeAreaView,
   ScrollView,
   StatusBar,
   TouchableOpacity,
-  useColorScheme,
   useWindowDimensions,
   View,
 } from 'react-native';
 import tw, {useDeviceContext} from 'twrnc';
 import {useNetInfo} from '@react-native-community/netinfo';
 import {MMKV} from 'react-native-mmkv';
+import {useAppearanceMode} from './Services/Hooks/appearanceMode';
 import BottomOptions from './Components/BottomOptions';
 import Header from './Components/Header';
 import OfflineStatus from './Components/OfflineStatus';
@@ -28,12 +27,7 @@ const App = () => {
   const [data, setData] = useState([]); //Saving api data
   const [category, setCategory] = useState(data); //Filtering displayed items by category using api data above
   const [loading, setLoading] = useState(true); //Showing sceleton loading 'animation'
-  const deviceTheme = useColorScheme(); //Getting device theme (light/dark)
-  const [defaultMode, setMode] = useState(
-    storage.getString('mode') !== undefined
-      ? storage.getString('mode')
-      : deviceTheme,
-  ); //Dynamically setting device theme (light/dark)
+  const {defaultMode, setMode} = useAppearanceMode(storage); //* Theme changing, dynamically setting device theme (light/dark)
   const netInfo = useNetInfo(); //Getting network status
   const [toClose, setToClose] = useState(!netInfo.isConnected); //Setting offline notice display status based on network status
   const [seeSaved, setSeeSaved] = useState(false); //Setting saved items display status
@@ -58,50 +52,44 @@ const App = () => {
     />
   ); //* Used by Fatlist
 
-  //* Theme changing
-  const themeChangeListener = useCallback(() => {
-    setMode(Appearance.getColorScheme());
-  }, []);
-  useEffect(() => {
-    Appearance.addChangeListener(themeChangeListener);
-    return () => Appearance.remove(themeChangeListener);
-  }, [themeChangeListener]);
-  useEffect(() => {
-    storage.set('mode', defaultMode);
-    setMode(storage.getString('mode'));
-  }, [defaultMode]);
-
-  //* Api call every time network status changes and data saving for offline usage
-  const fetchData = useCallback(async () => {
-    const url = 'https://api.jsonbin.it/bins/U7sfHkn4';
-    if (netInfo.isConnected) {
-      try {
+  const fetchLocalData = async () => {
+    try {
+      const localJson = storage.getString('data');
+      const localData = JSON.parse(localJson);
+      if (localData !== undefined || localData !== null || localData !== []) {
+        setData(localData);
+        setCategory(localData);
+      }
+    } catch (error) {
+      console.log('Failed to load data', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const fetchDataOnline = useCallback(async url => {
+    try {
+      const localJson = storage.getString('data');
+      const localData = JSON.parse(localJson);
+      const apiData = await fetch(url);
+      const json = await apiData.json();
+      if (JSON.stringify(localData) === JSON.stringify(json.products)) {
+        fetchLocalData();
+      } else {
         storage.delete('data');
-        const apiData = await fetch(url);
-        const json = await apiData.json();
-        storage.set('data', JSON.stringify(json));
+        storage.set('data', JSON.stringify(json.products));
         setData(json.products);
         setCategory(json.products);
-      } catch (error) {
-        console.log('Failed to get data', error);
-      } finally {
-        setLoading(false);
       }
-    } else {
-      try {
-        const localJson = storage.getString('data');
-        const localData = JSON.parse(localJson);
-        if (localData !== undefined || localData !== null || localData !== []) {
-          setData(localData.products);
-          setCategory(localData.products);
-        }
-      } catch (error) {
-        console.log('Failed to get data', error);
-      } finally {
-        setLoading(false);
-      }
+    } catch (error) {
+      console.log('Failed to get data', error);
+    } finally {
+      setLoading(false);
     }
-  }, [netInfo.isConnected]);
+  }, []);
+  const fetchData = useCallback(async () => {
+    const url = 'https://api.npoint.io/17abf908383cc3e872ba';
+    netInfo.isConnected ? fetchDataOnline(url) : fetchLocalData();
+  }, [netInfo.isConnected, fetchDataOnline]);
   useEffect(() => {
     fetchData();
   }, [netInfo.isConnected, fetchData]);
@@ -114,9 +102,11 @@ const App = () => {
 
   //* Header filtering row
   const filterItems = categories => {
-    categories === 'all' || categories === undefined || categories === null
+    categories === 'all' ||
+    typeof categories === undefined ||
+    categories === null
       ? setCategory(data)
-      : data !== undefined &&
+      : typeof data !== undefined &&
         setCategory(data.filter(item => item.category === categories));
   };
 
@@ -171,14 +161,6 @@ const App = () => {
           onPress={() => setSeeSaved(!seeSaved)}
         />
       )}
-      <OfflineStatus
-        mode={defaultMode}
-        toClose={toClose}
-        setToClose={setToClose}
-        width={width}
-        height={height}
-        seeSaved={seeSaved}
-      />
       <View style={tw`flex flex-col items-center justify-center w-full h-full`}>
         <ScrollView>
           <View style={tw`mb-2 p-1 ${toClose ? ' mt-20 ' : ' mt-5 '} `}>
@@ -214,6 +196,14 @@ const App = () => {
           </View>
         </ScrollView>
       </View>
+      <OfflineStatus
+        mode={defaultMode}
+        toClose={toClose}
+        setToClose={setToClose}
+        width={width}
+        height={height}
+        seeSaved={seeSaved}
+      />
       <SavedItems
         seeSaved={seeSaved}
         toClose={toClose}

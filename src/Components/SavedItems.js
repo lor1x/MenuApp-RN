@@ -30,23 +30,10 @@ const SavedItems = props => {
       {cancelable: true},
     );
 
-  const savedEmptyAlert = () =>
-    Alert.alert(
-      'No saved items to delete',
-      'This action will delete all your saved items (if you had any)',
-      [
-        {
-          text: 'Ok',
-          style: 'cancel',
-        },
-      ],
-      {cancelable: true},
-    );
-
   return (
     props.seeSaved && (
       <View
-        style={tw`absolute bottom-0 self-center w-full h-10/12 bg-red-500 rounded-tr-lg rounded-tl-lg z-20 pt-2 ${
+        style={tw`absolute bottom-0 self-center w-full h-10/12 bg-red-500 rounded-tr-lg rounded-tl-lg z-20 ${
           props.mode === 'light' ? ' bg-white ' : ' bg-slate-800 '
         } ${
           props.toClose && props.height <= props.width
@@ -59,26 +46,28 @@ const SavedItems = props => {
             <Text
               style={tw`${
                 props.mode === 'light' ? ' text-slate-700 ' : ' text-blue-500 '
-              } font-bold text-2xl mt-2 tracking-wide items-center flex-col flex text-center`}>
+              } font-bold text-2xl mt-4 tracking-wide items-center flex-col flex text-center`}>
               Your Saved Items
             </Text>
-            <View style={tw`flex-row right-1.5 top-2.5 absolute z-20`}>
-              <BlurButton
-                {...props}
-                iconView="px-2 py-1.5"
-                blurStyle="bg-red-500 opacity-75"
-                action={() =>
-                  requestAnimationFrame(() => {
-                    dataDisplay ? deleteSavedAlert() : savedEmptyAlert();
-                  })
-                }>
-                <IconDel
-                  name={dataDisplay ? 'trash-bin' : 'trash-bin-outline'}
-                  size={16}
-                  color={props.mode === 'dark' ? '#fff' : '#000'}
-                />
-              </BlurButton>
-            </View>
+            {dataDisplay && (
+              <View style={tw`flex-row right-1.5 top-4.5 absolute z-20`}>
+                <BlurButton
+                  {...props}
+                  iconView="px-2 py-1.5"
+                  blurStyle="bg-red-500 opacity-75"
+                  action={() =>
+                    requestAnimationFrame(() => {
+                      deleteSavedAlert();
+                    })
+                  }>
+                  <IconDel
+                    name="trash-bin"
+                    size={16}
+                    color={props.mode === 'dark' ? '#fff' : '#000'}
+                  />
+                </BlurButton>
+              </View>
+            )}
             <View
               style={tw`w-full h-full sm:w-10/12 flex-1 flex-col md:justify-around justify-center self-center mb-8 ${
                 dataDisplay ? ' -mt-3 ' : ' mt-2'
