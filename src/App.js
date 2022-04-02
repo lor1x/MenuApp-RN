@@ -54,31 +54,34 @@ const App = () => {
 
   const fetchData = useCallback(async () => {
     const url = 'https://api.npoint.io/240eb541ef3c02fcd7bd';
+    const localJson = storage.getString('data');
+    const localData = JSON.parse(localJson);
+
     if (netInfo.isConnected) {
       try {
-        storage.delete('data');
         const apiData = await fetch(url);
         const json = await apiData.json();
-        storage.set('data', JSON.stringify(json));
-        setData(json.products);
-        setCategory(json.products);
+        if (JSON.stringify(localData) === JSON.stringify(json.products) && typeof localData !== undefined) {
+              setData(localData.products);
+              setCategory(localData.products);
+        } else {
+          storage.delete('data');
+          storage.set('data', JSON.stringify(json.products));
+          setData(json.products);
+          setCategory(json.products);
+        }
       } catch (error) {
         console.log('Failed to get data', error);
       } finally {
         setLoading(false);
       }
     } else {
-      try {
-        const localJson = storage.getString('data');
-        const localData = JSON.parse(localJson);
-        if (localData !== undefined || localData !== null || localData !== []) {
-          setData(localData.products);
-          setCategory(localData.products);
-        }
-      } catch (error) {
-        console.log('Failed to get data', error);
-      } finally {
-        setLoading(false);
+        try {
+          (typeof localData !== undefined || localData !== null || localData !== []) && setData(localData.products) && setCategory(localData.products);
+        } catch (error) {
+          console.log('Failed to load data', error);
+        } finally {
+          setLoading(false);
       }
     }
   }, [netInfo.isConnected]);
