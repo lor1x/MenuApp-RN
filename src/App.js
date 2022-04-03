@@ -29,7 +29,7 @@ const App = () => {
   const [loading, setLoading] = useState(true); //Showing sceleton loading 'animation'
   const {defaultMode, setMode} = useAppearanceMode(storage); //* Theme changing, dynamically setting device theme (light/dark)
   const netInfo = useNetInfo(); //Getting network status
-  const [toClose, setToClose] = useState(!netInfo.isConnected); //Setting offline notice display status based on network status
+  const [toClose, setToClose] = useState(!netInfo.isInternetReachable); //Setting offline notice display status based on network status
   const [seeSaved, setSeeSaved] = useState(false); //Setting saved items display status
   const [saved, setSaved] = useState(
     storage.getString('saved') !== undefined
@@ -52,36 +52,54 @@ const App = () => {
     />
   ); //* Used by Fatlist
 
+  //const url = 'https://api.jsonbin.it/bins/REUvCBJY';
   const fetchData = useCallback(async () => {
     const url = 'https://api.npoint.io/240eb541ef3c02fcd7bd';
-    const localJson = storage.getString('data');
-    const localData = JSON.parse(localJson);
-
     if (netInfo.isConnected) {
       try {
         const apiData = await fetch(url);
         const json = await apiData.json();
-        if (JSON.stringify(localData) === JSON.stringify(json.products) && typeof localData !== undefined) {
-              setData(localData.products);
-              setCategory(localData.products);
-        } else {
-          storage.delete('data');
-          storage.set('data', JSON.stringify(json.products));
-          setData(json.products);
-          setCategory(json.products);
-        }
-      } catch (error) {
-        console.log('Failed to get data', error);
-      } finally {
-        setLoading(false);
+        storage.getAllKeys().indexOf('data') !== -1
+          ? () => {
+              const lclJsn = storage.getString('data');
+              if (typeof lclJsn !== undefined || lclJsn !== null) {
+                const lclDat = JSON.parse(lclJsn);
+                console.log(
+                  lclDat.products === json.products ? 'true man' : 'f noo',
+                );
+                lclDat.products === json.products &&
+                  (setData(lclDat.products),
+                  setCategory(lclDat.products),
+                  setLoading(false));
+                return;
+              }
+              storage.delete('data');
+              setData(json.products);
+              setCategory(json.products);
+              storage.set('data', JSON.stringify(json));
+              setLoading(false);
+            }
+          : (setData(json.products),
+            setCategory(json.products),
+            storage.set('data', JSON.stringify(json)),
+            setLoading(false));
+      } catch (err) {
+        console.log('Failed to get data', err);
       }
     } else {
-        try {
-          (typeof localData !== undefined || localData !== null || localData !== []) && setData(localData.products) && setCategory(localData.products);
-        } catch (error) {
-          console.log('Failed to load data', error);
-        } finally {
-          setLoading(false);
+      try {
+        const keys = storage.getAllKeys();
+        if (keys.indexOf('data') !== -1) {
+          const lclJsn = storage.getString('data');
+          if (typeof lclJsn !== undefined || lclJsn !== null || lclJsn !== []) {
+            const lclDat = JSON.parse(lclJsn);
+            setData(lclDat.products);
+            setCategory(lclDat.products);
+            setLoading(false);
+          }
+        }
+      } catch (err) {
+        console.log('Failed to load data', err);
       }
     }
   }, [netInfo.isConnected]);
@@ -91,9 +109,9 @@ const App = () => {
 
   //* Offline notice
   useEffect(() => {
-    setToClose(!netInfo.isConnected);
+    setToClose(!netInfo.isInternetReachable);
     return;
-  }, [netInfo.isConnected]);
+  }, [netInfo.isInternetReachable]);
 
   //* Header filtering row
   const filterItems = categories => {
@@ -158,7 +176,7 @@ const App = () => {
       )}
       <View style={tw`flex flex-col items-center justify-center w-full h-full`}>
         <ScrollView>
-          <View style={tw`mb-2 p-1 ${toClose ? ' mt-20 ' : ' mt-5 '} `}>
+          <View style={tw`mb-2 p-1 ${toClose ? ' mt-20 ' : ' mt-5 '}`}>
             <Header filtering={filterItems} mode={defaultMode} />
           </View>
           <View
@@ -201,15 +219,14 @@ const App = () => {
         deleteSaved={deleteAllSaved}
         mode={defaultMode}
       />
-      {toClose && (
-        <OfflineStatus
-          mode={defaultMode}
-          setToClose={setToClose}
-          width={width}
-          height={height}
-          seeSaved={seeSaved}
-        />
-      )}
+      <OfflineStatus
+        mode={defaultMode}
+        toClose={toClose}
+        setToClose={setToClose}
+        width={width}
+        height={height}
+        seeSaved={seeSaved}
+      />
       <BottomOptions
         mode={defaultMode}
         setMode={setMode}
